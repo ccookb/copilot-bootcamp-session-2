@@ -9,4 +9,8 @@ This file contains high-level instructions for GitHub Copilot to follow when gen
 The project documentation will be built during the bootcamp sessions.
 
 - [Project Overview](../docs/project-overview.md) - Overview of the project
+<<<<<<< Updated upstream
 - [Functional Requirements](../docs/functional-requirements.md) - Feature requirements including task management, due date assignment, and sorting
+=======
+- [UI Guidelines](../docs/ui-guidelines.md) - Material components, color palette, and button style standards
+>>>>>>> Stashed changes
