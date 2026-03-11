@@ -1,11 +1,18 @@
 import React, { useState, useEffect } from 'react';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
 import './App.css';
+import PriorityPill from './components/PriorityPill';
+import { DEFAULT_PRIORITY, PRIORITY_VALUES } from './constants/priority';
 
 function App() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [newItem, setNewItem] = useState('');
+  const [newItemPriority, setNewItemPriority] = useState(DEFAULT_PRIORITY);
 
   useEffect(() => {
     fetchData();
@@ -39,7 +46,7 @@ function App() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name: newItem }),
+        body: JSON.stringify({ name: newItem, priority: newItemPriority }),
       });
 
       if (!response.ok) {
@@ -49,6 +56,7 @@ function App() {
       const result = await response.json();
       setData([...data, result]);
       setNewItem('');
+      setNewItemPriority(DEFAULT_PRIORITY);
     } catch (err) {
       setError('Error adding item: ' + err.message);
       console.error('Error adding item:', err);
@@ -90,6 +98,20 @@ function App() {
               onChange={(e) => setNewItem(e.target.value)}
               placeholder="Enter item name"
             />
+            <FormControl size="small" sx={{ minWidth: 160 }}>
+              <InputLabel id="priority-select-label">Priority</InputLabel>
+              <Select
+                labelId="priority-select-label"
+                id="priority-select"
+                value={newItemPriority}
+                label="Priority"
+                onChange={(e) => setNewItemPriority(e.target.value)}
+              >
+                <MenuItem value={PRIORITY_VALUES.HIGH}>High</MenuItem>
+                <MenuItem value={PRIORITY_VALUES.MEDIUM}>Medium</MenuItem>
+                <MenuItem value={PRIORITY_VALUES.MINOR}>Minor</MenuItem>
+              </Select>
+            </FormControl>
             <button type="submit">Add Item</button>
           </form>
         </section>
@@ -103,12 +125,11 @@ function App() {
               {data.length > 0 ? (
                 data.map((item) => (
                   <li key={item.id}>
-                    <span>{item.name}</span>
-                    <button 
-                      onClick={() => handleDelete(item.id)}
-                      className="delete-btn"
-                      type="button"
-                    >
+                    <span className="item-details">
+                      <span>{item.name}</span>
+                      <PriorityPill priority={item.priority} />
+                    </span>
+                    <button onClick={() => handleDelete(item.id)} className="delete-btn" type="button">
                       Delete
                     </button>
                   </li>

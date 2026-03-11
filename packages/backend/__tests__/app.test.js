@@ -1,5 +1,9 @@
 const request = require('supertest');
-const { app, db } = require('../src/app');
+const { app, db, resetItems } = require('../src/app');
+
+beforeEach(() => {
+  resetItems();
+});
 
 // Close the database connection after all tests
 afterAll(() => {
@@ -12,7 +16,7 @@ afterAll(() => {
 const createItem = async (name = 'Temp Item to Delete') => {
   const response = await request(app)
     .post('/api/items')
-    .send({ name })
+    .send({ name, priority: 'medium' })
     .set('Accept', 'application/json');
 
   expect(response.status).toBe(201);
@@ -33,13 +37,14 @@ describe('API Endpoints', () => {
       const item = response.body[0];
       expect(item).toHaveProperty('id');
       expect(item).toHaveProperty('name');
+      expect(item).toHaveProperty('priority');
       expect(item).toHaveProperty('created_at');
     });
   });
 
   describe('POST /api/items', () => {
     it('should create a new item', async () => {
-      const newItem = { name: 'Test Item' };
+      const newItem = { name: 'Test Item', priority: 'high' };
       const response = await request(app)
         .post('/api/items')
         .send(newItem)
@@ -48,7 +53,29 @@ describe('API Endpoints', () => {
       expect(response.status).toBe(201);
       expect(response.body).toHaveProperty('id');
       expect(response.body.name).toBe(newItem.name);
+      expect(response.body.priority).toBe('high');
       expect(response.body).toHaveProperty('created_at');
+    });
+
+    it('should default priority to medium when omitted', async () => {
+      const response = await request(app)
+        .post('/api/items')
+        .send({ name: 'Default Priority Item' })
+        .set('Accept', 'application/json');
+
+      expect(response.status).toBe(201);
+      expect(response.body.priority).toBe('medium');
+    });
+
+    it('should return 400 for invalid priority', async () => {
+      const response = await request(app)
+        .post('/api/items')
+        .send({ name: 'Invalid Priority Item', priority: 'urgent' })
+        .set('Accept', 'application/json');
+
+      expect(response.status).toBe(400);
+      expect(response.body).toHaveProperty('error');
+      expect(response.body.error).toBe('Priority must be one of: high, medium, minor');
     });
 
     it('should return 400 if name is missing', async () => {

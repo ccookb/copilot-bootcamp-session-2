@@ -1,5 +1,6 @@
 import React, { act } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
+import { within } from '@testing-library/dom';
 import userEvent from '@testing-library/user-event';
 import { rest } from 'msw';
 import { setupServer } from 'msw/node';
@@ -12,15 +13,15 @@ const server = setupServer(
     return res(
       ctx.status(200),
       ctx.json([
-        { id: 1, name: 'Test Item 1', created_at: '2023-01-01T00:00:00.000Z' },
-        { id: 2, name: 'Test Item 2', created_at: '2023-01-02T00:00:00.000Z' },
+        { id: 1, name: 'Test Item 1', priority: 'high', created_at: '2023-01-01T00:00:00.000Z' },
+        { id: 2, name: 'Test Item 2', priority: 'minor', created_at: '2023-01-02T00:00:00.000Z' },
       ])
     );
   }),
   
   // POST /api/items handler
   rest.post('/api/items', (req, res, ctx) => {
-    const { name } = req.body;
+    const { name, priority } = req.body;
     
     if (!name || name.trim() === '') {
       return res(
@@ -34,9 +35,13 @@ const server = setupServer(
       ctx.json({
         id: 3,
         name,
+        priority: priority || 'medium',
         created_at: new Date().toISOString(),
       })
     );
+  }),
+  rest.delete('/api/items/:id', (req, res, ctx) => {
+    return res(ctx.status(200), ctx.json({ message: 'Item deleted successfully', id: Number(req.params.id) }));
   })
 );
 
@@ -50,8 +55,8 @@ describe('App Component', () => {
     await act(async () => {
       render(<App />);
     });
-    expect(screen.getByText('React Frontend with Node Backend')).toBeInTheDocument();
-    expect(screen.getByText('Connected to in-memory database')).toBeInTheDocument();
+    expect(screen.getByText('To Do App')).toBeInTheDocument();
+    expect(screen.getByText('Keep track of your tasks')).toBeInTheDocument();
   });
 
   test('loads and displays items', async () => {
@@ -86,6 +91,14 @@ describe('App Component', () => {
     await act(async () => {
       await user.type(input, 'New Test Item');
     });
+
+    const prioritySelect = screen.getByLabelText('Priority');
+    await act(async () => {
+      await user.click(prioritySelect);
+    });
+    await act(async () => {
+      await user.click(screen.getByRole('option', { name: 'High' }));
+    });
     
     const submitButton = screen.getByText('Add Item');
     await act(async () => {
@@ -95,6 +108,35 @@ describe('App Component', () => {
     // Check that the new item appears
     await waitFor(() => {
       expect(screen.getByText('New Test Item')).toBeInTheDocument();
+    });
+
+    const row = screen.getByText('New Test Item').closest('li');
+    expect(row).not.toBeNull();
+    expect(within(row).getByText('High priority')).toBeInTheDocument();
+  });
+
+  test('defaults new item priority to medium', async () => {
+    const user = userEvent.setup();
+
+    await act(async () => {
+      render(<App />);
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText('Loading data...')).not.toBeInTheDocument();
+    });
+
+    await act(async () => {
+      await user.type(screen.getByPlaceholderText('Enter item name'), 'Medium Priority Item');
+    });
+
+    await act(async () => {
+      await user.click(screen.getByText('Add Item'));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Medium Priority Item')).toBeInTheDocument();
+      expect(screen.getByText('Medium priority')).toBeInTheDocument();
     });
   });
 

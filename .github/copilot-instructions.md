@@ -13,3 +13,4 @@ The project documentation will be built during the bootcamp sessions.
 - [UI Guidelines](../docs/ui-guidelines.md) - Material components, color palette, and button style standards
 - [Testing Guidelines](../docs/testing-guidelines.md) - Unit, integration, and E2E testing standards and structure
 - [Coding Guidelines](../docs/coding-guidelines.md) - DRY principles, componentization, reusability, and function docstring standards
+- [Priority Feature Implementation Plan](../docs/priority-feature-implementation-plan.md) - Step-by-step implementation plan for task priority selection and priority pill display

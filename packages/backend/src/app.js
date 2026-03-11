@@ -3,6 +3,9 @@ const cors = require('cors');
 const morgan = require('morgan');
 const Database = require('better-sqlite3');
 
+const PRIORITY_VALUES = ['high', 'medium', 'minor'];
+const DEFAULT_PRIORITY = 'medium';
+
 // Initialize express app
 const app = express();
 
@@ -19,16 +22,18 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS items (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
+    priority TEXT NOT NULL DEFAULT 'medium',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   )
 `);
 
 // Insert some initial data
 const initialItems = ['Item 1', 'Item 2', 'Item 3'];
-const insertStmt = db.prepare('INSERT INTO items (name) VALUES (?)');
+const insertStmt = db.prepare('INSERT INTO items (name, priority) VALUES (?, ?)');
+const deleteAllStmt = db.prepare('DELETE FROM items');
 
 initialItems.forEach(item => {
-  insertStmt.run(item);
+  insertStmt.run(item, DEFAULT_PRIORITY);
 });
 
 console.log('In-memory database initialized with sample data');
@@ -51,13 +56,20 @@ app.get('/api/items', (req, res) => {
 
 app.post('/api/items', (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, priority } = req.body;
+    const normalizedPriority = (priority || DEFAULT_PRIORITY).toString().toLowerCase();
 
     if (!name || typeof name !== 'string' || name.trim() === '') {
       return res.status(400).json({ error: 'Item name is required' });
     }
 
-    const result = insertStmt.run(name);
+    if (!PRIORITY_VALUES.includes(normalizedPriority)) {
+      return res
+        .status(400)
+        .json({ error: 'Priority must be one of: high, medium, minor' });
+    }
+
+    const result = insertStmt.run(name.trim(), normalizedPriority);
     const id = result.lastInsertRowid;
 
     const newItem = db.prepare('SELECT * FROM items WHERE id = ?').get(id);
@@ -67,6 +79,18 @@ app.post('/api/items', (req, res) => {
     res.status(500).json({ error: 'Failed to create item' });
   }
 });
+
+/**
+ * Reset the in-memory items table to the seeded default rows.
+ *
+ * @returns {void}
+ */
+const resetItems = () => {
+  deleteAllStmt.run();
+  initialItems.forEach(item => {
+    insertStmt.run(item, DEFAULT_PRIORITY);
+  });
+};
 
 app.delete('/api/items/:id', (req, res) => {
   try {
@@ -95,4 +119,11 @@ app.delete('/api/items/:id', (req, res) => {
   }
 });
 
-module.exports = { app, db, insertStmt };
+module.exports = {
+  app,
+  db,
+  insertStmt,
+  resetItems,
+  PRIORITY_VALUES,
+  DEFAULT_PRIORITY,
+};

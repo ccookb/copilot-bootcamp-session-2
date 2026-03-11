@@ -33,6 +33,7 @@ section {
 
 .add-item-section form {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   margin-top: 10px;
 }
@@ -70,6 +71,13 @@ li {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
+}
+
+.item-details {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 li:last-child {
