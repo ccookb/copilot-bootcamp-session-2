@@ -12,3 +12,4 @@ The project documentation will be built during the bootcamp sessions.
 - [Functional Requirements](../docs/functional-requirements.md) - Feature requirements including task management, due date assignment, and sorting
 - [UI Guidelines](../docs/ui-guidelines.md) - Material components, color palette, and button style standards
 - [Testing Guidelines](../docs/testing-guidelines.md) - Unit, integration, and E2E testing standards and structure
+- [Coding Guidelines](../docs/coding-guidelines.md) - DRY principles, componentization, reusability, and function docstring standards
